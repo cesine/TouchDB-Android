@@ -40,6 +40,7 @@ public class TDView {
         TDViewCollationUnicode, TDViewCollationRaw, TDViewCollationASCII
     }
 
+    private boolean D = false;
     private TDDatabase db;
     private String name;
     private int viewId;
@@ -255,7 +256,7 @@ public class TDView {
      */
     @SuppressWarnings("unchecked")
     public TDStatus updateIndex() {
-        Log.v(TDDatabase.TAG, "Re-indexing view " + name + " ...");
+        if(D) Log.v(TDDatabase.TAG, "Re-indexing view " + name + " ...");
         assert (mapBlock != null);
 
         if (getViewId() < 0) {
@@ -315,7 +316,7 @@ public class TDView {
                     try {
                         String keyJson = TDServer.getObjectMapper().writeValueAsString(key);
                         String valueJson = TDServer.getObjectMapper().writeValueAsString(value);
-                        Log.v(TDDatabase.TAG, "    emit(" + keyJson + ", "
+                        if(D) Log.v(TDDatabase.TAG, "    emit(" + keyJson + ", "
                                 + valueJson + ")");
 
                         ContentValues insertValues = new ContentValues();
@@ -369,7 +370,7 @@ public class TDView {
                     if (properties != null) {
                         // Call the user-defined map() to emit new key/value
                         // pairs from this revision:
-                        Log.v(TDDatabase.TAG,
+                        if(D) Log.v(TDDatabase.TAG,
                                 "  call map for sequence="
                                         + Long.toString(sequence));
                         emitBlock.setSequence(sequence);
@@ -390,7 +391,7 @@ public class TDView {
                     whereArgs);
 
             // FIXME actually count number added :)
-            Log.v(TDDatabase.TAG, "...Finished re-indexing view " + name
+            if(D) Log.v(TDDatabase.TAG, "...Finished re-indexing view " + name
                     + " up to sequence " + Long.toString(dbMaxSequence)
                     + " (deleted " + deleted + " added " + "?" + ")");
             result.setCode(TDStatus.OK);
@@ -491,7 +492,7 @@ public class TDView {
         argsList.add(Integer.toString(options.getLimit()));
         argsList.add(Integer.toString(options.getSkip()));
 
-        Log.v(TDDatabase.TAG, "Query " + name + ": " + sql);
+        if(D) Log.v(TDDatabase.TAG, "Query " + name + ": " + sql);
 
         Cursor cursor = db.getDatabase().rawQuery(sql,
                 argsList.toArray(new String[argsList.size()]));
