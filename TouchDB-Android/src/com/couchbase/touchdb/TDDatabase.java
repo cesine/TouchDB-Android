@@ -562,6 +562,7 @@ public class TDDatabase extends Observable {
         if(jsonLength == 2) { // Original JSON was empty
             return extraJSON;
         }
+        /* TODO dig in here for the out of memory */ 
         byte[] newJson = new byte[jsonLength + extraLength - 1];
         System.arraycopy(json, 0, newJson, 0, jsonLength - 1);  // Copy json w/o trailing '}'
         newJson[jsonLength - 1] = ',';  // Add a ','

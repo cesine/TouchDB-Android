@@ -397,7 +397,11 @@ public class TDRouter implements Observer {
             }
         } catch (Exception e) {
             //default status is internal server error
-            Log.e(TDDatabase.TAG, "Exception in TDRouter", e);
+          String attachmentNameForLog = attachmentName;
+          if(attachmentNameForLog == null){
+            attachmentNameForLog ="null";
+          }
+            Log.e(TDDatabase.TAG, "Exception in TDRouter on "+attachmentNameForLog, e);
         }
 
         // Configure response headers:
