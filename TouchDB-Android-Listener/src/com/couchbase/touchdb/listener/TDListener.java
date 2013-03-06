@@ -15,7 +15,9 @@ public class TDListener implements Runnable {
     private TDServer server;
     private TDHTTPServer httpServer;
 
-    //static inializer to ensure that touchdb:// URLs are handled properly
+    private int serverresult;
+
+    // static inializer to ensure that touchdb:// URLs are handled properly
     {
         TDURLStreamHandlerFactory.registerSelfIgnoreError();
     }
@@ -31,9 +33,8 @@ public class TDListener implements Runnable {
     @Override
     public void run() {
         try {
-            httpServer.serve();
-        }
-        finally {
+            serverresult = httpServer.serve();
+        } finally {
             handlerThread.quit();
             handlerThread = null;
             handler = null;
@@ -58,8 +59,8 @@ public class TDListener implements Runnable {
     }
 
     public String getStatus() {
-        String status = this.httpServer.getServerInfo();
-        return status;
+        // String status = this.httpServer.getServerInfo();
+        return "" + serverresult;
     }
 
 }
