@@ -41,9 +41,11 @@ public class TouchDBHttpClient implements HttpClient {
         TDURLConnection conn = null;
         URL url = urlFromUri(uri);
         try {
-            conn = (TDURLConnection)url.openConnection();
+            conn = (TDURLConnection) url.openConnection();
             conn.setDoOutput(true);
         } catch (IOException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
+
             Exceptions.propagate(e);
         }
         return conn;
@@ -56,6 +58,8 @@ public class TouchDBHttpClient implements HttpClient {
             conn.setRequestMethod("DELETE");
             return executeRequest(conn);
         } catch (ProtocolException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
+
             throw Exceptions.propagate(e);
         }
     }
@@ -67,6 +71,8 @@ public class TouchDBHttpClient implements HttpClient {
             conn.setRequestMethod("GET");
             return executeRequest(conn);
         } catch (ProtocolException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
+
             throw Exceptions.propagate(e);
         }
     }
@@ -83,6 +89,8 @@ public class TouchDBHttpClient implements HttpClient {
             conn.setRequestMethod("HEAD");
             return executeRequest(conn);
         } catch (ProtocolException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
+
             throw Exceptions.propagate(e);
         }
     }
@@ -93,13 +101,15 @@ public class TouchDBHttpClient implements HttpClient {
         try {
             conn.setRequestMethod("POST");
 
-            if(content != null) {
+            if (content != null) {
                 conn.setDoInput(true);
                 conn.setRequestInputStream(new ByteArrayInputStream(content.getBytes()));
             }
 
             return executeRequest(conn);
         } catch (ProtocolException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
+
             throw Exceptions.propagate(e);
         }
     }
@@ -110,13 +120,15 @@ public class TouchDBHttpClient implements HttpClient {
         try {
             conn.setRequestMethod("POST");
 
-            if(contentStream != null) {
+            if (contentStream != null) {
                 conn.setDoInput(true);
                 conn.setRequestInputStream(contentStream);
             }
 
             return executeRequest(conn);
         } catch (ProtocolException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
+
             throw Exceptions.propagate(e);
         }
     }
@@ -134,6 +146,8 @@ public class TouchDBHttpClient implements HttpClient {
 
             return executeRequest(conn);
         } catch (ProtocolException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
+
             throw Exceptions.propagate(e);
         }
     }
@@ -144,24 +158,27 @@ public class TouchDBHttpClient implements HttpClient {
         try {
             conn.setRequestMethod("PUT");
 
-            if(content != null) {
+            if (content != null) {
                 conn.setDoInput(true);
                 conn.setRequestInputStream(new ByteArrayInputStream(content.getBytes()));
             }
 
             return executeRequest(conn);
         } catch (ProtocolException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
+
             throw Exceptions.propagate(e);
         }
     }
 
     @Override
-    public HttpResponse put(String uri, InputStream contentStream, String contentType, long contentLength) {
+    public HttpResponse put(String uri, InputStream contentStream,
+            String contentType, long contentLength) {
         TDURLConnection conn = connectionFromUri(uri);
         try {
             conn.setRequestMethod("PUT");
 
-            if(contentStream != null) {
+            if (contentStream != null) {
                 conn.setDoInput(true);
                 conn.setRequestProperty("content-type", contentType);
                 conn.setRequestInputStream(contentStream);
@@ -169,6 +186,8 @@ public class TouchDBHttpClient implements HttpClient {
 
             return executeRequest(conn);
         } catch (ProtocolException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
+
             throw Exceptions.propagate(e);
         }
     }
@@ -184,10 +203,12 @@ public class TouchDBHttpClient implements HttpClient {
         try {
             response = TouchDBHttpResponse.of(conn, router);
         } catch (IOException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
+
             throw Exceptions.propagate(e);
         }
         router.setCallbackBlock(response);
-        synchronized(server) {
+        synchronized (server) {
             router.start();
         }
         return response;
