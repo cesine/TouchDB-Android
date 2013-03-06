@@ -42,7 +42,9 @@ public class TDHTTPServer extends Serve {
         servlet.setListener(listener);
 
         this.addServlet("/", servlet);
-        return super.serve();
+        int result = super.serve();
+        
+        return result;
     }
 
 }
