@@ -111,6 +111,7 @@ public class TDRouter implements Observer {
                 result = Integer.parseInt(value);
             } catch (NumberFormatException e) {
                 //ignore, will return default value
+                Log.d(TDDatabase.TAG, "Error", e);
             }
         }
 
@@ -126,7 +127,7 @@ public class TDRouter implements Observer {
         try {
             result = TDServer.getObjectMapper().readValue(value, Object.class);
         } catch (Exception e) {
-            Log.w("Unable to parse JSON Query", e);
+            Log.w(TDDatabase.TAG, "Unable to parse JSON Query", e);
         }
         return result;
     }
@@ -144,6 +145,7 @@ public class TDRouter implements Observer {
             Map<String,Object> bodyMap = TDServer.getObjectMapper().readValue(contentStream, Map.class);
             return bodyMap;
         } catch (IOException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
             return null;
         }
     }
@@ -278,7 +280,8 @@ public class TDRouter implements Observer {
                     try {
                         connection.getResponseOutputStream().close();
                     } catch (IOException e) {
-                        Log.e(TDDatabase.TAG, "Error closing empty output stream");
+                        Log.e(TDDatabase.TAG,
+                                "Error closing empty output stream", e);
                     }
                     sendResponse();
                     return;
@@ -298,7 +301,8 @@ public class TDRouter implements Observer {
                 try {
                     connection.getResponseOutputStream().close();
                 } catch (IOException e) {
-                    Log.e(TDDatabase.TAG, "Error closing empty output stream");
+                    Log.e(TDDatabase.TAG, "Error closing empty output stream",
+                            e);
                 }
                 sendResponse();
                 return;
@@ -311,7 +315,8 @@ public class TDRouter implements Observer {
                     try {
                         connection.getResponseOutputStream().close();
                     } catch (IOException e) {
-                        Log.e(TDDatabase.TAG, "Error closing empty output stream");
+                        Log.e(TDDatabase.TAG,
+                                "Error closing empty output stream", e);
                     }
                     sendResponse();
                     return;
@@ -324,7 +329,8 @@ public class TDRouter implements Observer {
                     try {
                         connection.getResponseOutputStream().close();
                     } catch (IOException e) {
-                        Log.e(TDDatabase.TAG, "Error closing empty output stream");
+                        Log.e(TDDatabase.TAG,
+                                "Error closing empty output stream", e);
                     }
                     sendResponse();
                     return;
@@ -394,6 +400,8 @@ public class TDRouter implements Observer {
                 status = (TDStatus)m.invoke(this, db, docID, attachmentName);
             } catch (Exception e) {
                 //default status is internal server error
+                Log.w(TDDatabase.TAG, "Error", e);
+
             }
         } catch (Exception e) {
             //default status is internal server error
@@ -437,7 +445,8 @@ public class TDRouter implements Observer {
                 try {
                     connection.getResponseOutputStream().close();
                 } catch (IOException e) {
-                    Log.e(TDDatabase.TAG, "Error closing empty output stream");
+                    Log.e(TDDatabase.TAG, "Error closing empty output stream",
+                            e);
                 }
             }
             sendResponse();
@@ -546,6 +555,7 @@ public class TDRouter implements Observer {
         try {
             remote = new URL(remoteStr);
         } catch (MalformedURLException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
             return new TDStatus(TDStatus.BAD_REQUEST);
         }
         if(remote == null || !remote.getProtocol().startsWith("http")) {
@@ -943,7 +953,7 @@ public class TDRouter implements Observer {
                 }
             }
         } catch (Exception e) {
-            Log.w("Unable to serialize change to JSON", e);
+          Log.w(TDDatabase.TAG, "Unable to serialize change to JSON");
         }
     }
 
@@ -1248,7 +1258,7 @@ public class TDRouter implements Observer {
                     try {
                         url = new URL(urlString);
                     } catch (MalformedURLException e) {
-                        Log.w("Malformed URL", e);
+                        Log.w(TDDatabase.TAG, "Malformed URL", e);
                     }
                 }
                 setResponseLocation(url);
@@ -1328,6 +1338,36 @@ public class TDRouter implements Observer {
         if(mapSource == null) {
             return null;
         }
+        
+        
+        /*
+
+xception in TDRouter on byStage
+02-24 09:47:11.860 E/TDDatabase( 4947): java.lang.reflect.InvocationTargetException
+02-24 09:47:11.860 E/TDDatabase( 4947):   at java.lang.reflect.Method.invokeNative(Native Method)
+02-24 09:47:11.860 E/TDDatabase( 4947):   at java.lang.reflect.Method.invoke(Method.java:491)
+02-24 09:47:11.860 E/TDDatabase( 4947):   at com.couchbase.touchdb.router.TDRouter.start(TDRouter.java:390)
+02-24 09:47:11.860 E/TDDatabase( 4947):   at com.couchbase.touchdb.listener.TDHTTPServlet.service(TDHTTPServlet.java:108)
+02-24 09:47:11.860 E/TDDatabase( 4947):   at javax.servlet.http.HttpServlet.service(HttpServlet.java:802)
+02-24 09:47:11.860 E/TDDatabase( 4947):   at Acme.Serve.Serve$ServeConnection.runServlet(Serve.java:2347)
+02-24 09:47:11.860 E/TDDatabase( 4947):   at Acme.Serve.Serve$ServeConnection.parseRequest(Serve.java:2266)
+02-24 09:47:11.860 E/TDDatabase( 4947):   at Acme.Serve.Serve$ServeConnection.run(Serve.java:2056)
+02-24 09:47:11.860 E/TDDatabase( 4947):   at Acme.Utils$ThreadPool$PooledThread.run(Utils.java:1223)
+02-24 09:47:11.860 E/TDDatabase( 4947):   at java.lang.Thread.run(Thread.java:1020)
+02-24 09:47:11.860 E/TDDatabase( 4947): Caused by: java.lang.NullPointerException
+02-24 09:47:11.860 E/TDDatabase( 4947):   at com.couchbase.touchdb.router.TDRouter.compileView(TDRouter.java:1331)
+02-24 09:47:11.860 E/TDDatabase( 4947):   at com.couchbase.touchdb.router.TDRouter.queryDesignDoc(TDRouter.java:1371)
+02-24 09:47:11.860 E/TDDatabase( 4947):   at com.couchbase.touchdb.router.TDRouter.do_GET_DesignDocument(TDRouter.java:1423)
+02-24 09:47:11.860 E/TDDatabase( 4947):   ... 10 more
+*/
+        if(TDView.getCompiler() == null){
+          Log.w(TDDatabase.TAG, String.format("TDView getCompiler function returns null %s", viewName, mapSource));
+//          TDView.setCompiler(new TDJavaScriptViewCompiler());
+
+//          return null;
+        }
+        
+        
         TDViewMapBlock mapBlock = TDView.getCompiler().compileMapFunction(mapSource, language);
         if(mapBlock == null) {
             Log.w(TDDatabase.TAG, String.format("View %s has unknown map function: %s", viewName, mapSource));

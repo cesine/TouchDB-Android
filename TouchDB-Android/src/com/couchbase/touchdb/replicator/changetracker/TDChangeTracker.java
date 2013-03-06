@@ -217,9 +217,14 @@ public class TDChangeTracker implements Runnable {
 	                            receivedChunk(line);
 	                        }
 	                    }
-                	} finally {
-                		try { entity.consumeContent(); } catch (IOException e){}
-                	}
+                    } finally {
+                        try {
+                            entity.consumeContent();
+                        } catch (IOException e) {
+                            Log.w(TDDatabase.TAG, "Error getting HTTPEntity ",
+                                    e);
+                        }
+                    }
                 }
             } catch (ClientProtocolException e) {
                 Log.e(TDDatabase.TAG, "ClientProtocolException in change tracker", e);

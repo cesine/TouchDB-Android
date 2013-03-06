@@ -197,6 +197,7 @@ public class TDPuller extends TDReplicator implements TDChangeTrackerClient {
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
+                Log.w(TDDatabase.TAG, "processInbox was woken up ", e);
                 //wake up
             }
         }

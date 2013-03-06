@@ -219,6 +219,8 @@ public class TDDatabase extends Observable {
                 database.execSQL(statement);
             }
         } catch (SQLException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
+
             close();
             return false;
         }
@@ -405,6 +407,7 @@ public class TDDatabase extends Observable {
             ++transactionLevel;
             //Log.v(TAG, "Begin transaction (level " + Integer.toString(transactionLevel) + ")...");
         } catch (SQLException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
             return false;
         }
         return true;
@@ -428,6 +431,7 @@ public class TDDatabase extends Observable {
             try {
                 database.endTransaction();
             } catch (SQLException e) {
+                Log.w(TDDatabase.TAG, "Error", e);
                 return false;
             }
         }
@@ -980,6 +984,7 @@ public class TDDatabase extends Observable {
             try {
                 result = Integer.parseInt(rev.substring(0, dashPos));
             } catch (NumberFormatException e) {
+                Log.w(TDDatabase.TAG, "Error", e);
                 // ignore, let it return -1
             }
         }
@@ -2182,12 +2187,14 @@ public class TDDatabase extends Observable {
                 try {
                     database.update("revs", args, "sequence=?", whereArgs);
                 } catch (SQLException e) {
+                    Log.w(TDDatabase.TAG, "Error", e);
                     return new TDStatus(TDStatus.INTERNAL_SERVER_ERROR);
                 }
             }
 
             success = true;
         } catch(SQLException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
             endTransaction(success);
             return new TDStatus(TDStatus.INTERNAL_SERVER_ERROR);
         } finally {
@@ -2393,7 +2400,7 @@ public class TDDatabase extends Observable {
                     result = new TDRevision(docID, gotRevID, false);
                     result.setProperties(properties);
                 } catch (Exception e) {
-                    Log.w(TAG, "Error parsing local doc JSON", e);
+                    Log.w(TDDatabase.TAG, "Error parsing local doc JSON", e);
                     return null;
                 }
 
@@ -2481,6 +2488,7 @@ public class TDDatabase extends Observable {
             }
             return new TDStatus(TDStatus.OK);
         } catch (SQLException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
             return new TDStatus(TDStatus.INTERNAL_SERVER_ERROR);
         }
     }

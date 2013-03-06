@@ -61,6 +61,7 @@ public class TDBody {
             try {
                 json = TDServer.getObjectMapper().writeValueAsBytes(object);
             } catch (Exception e) {
+                Log.w(TDDatabase.TAG, "Error in isValidJSON ", e);
                 error = true;
             }
         }
@@ -72,7 +73,7 @@ public class TDBody {
             try {
                 json = TDServer.getObjectMapper().writeValueAsBytes(object);
             } catch (Exception e) {
-                Log.w(TDDatabase.TAG, "TDBody: couldn't convert JSON");
+                Log.w(TDDatabase.TAG, "TDBody: couldn't convert JSON", e);
                 error = true;
             }
         }
@@ -86,6 +87,7 @@ public class TDBody {
             try {
                 json = writer.writeValueAsBytes(properties);
             } catch (Exception e) {
+                Log.w(TDDatabase.TAG, "Error in getPrettyJson", e);
                 error = true;
             }
         }
@@ -120,7 +122,40 @@ public class TDBody {
     }
 
     public Object getPropertyForKey(String key) {
-        Map<String,Object> theProperties = getProperties();
+        Map<String, Object> theProperties = getProperties();
+        if (theProperties == null) {
+            Log.e("TDDatabase", "theProperties was null");
+            /* TODO test this */
+            return null;
+        }
+        if (theProperties == null) {
+            Log.e("key", "key was null");
+            /* TODO test this */
+            return null;
+        }
+        /* 
+         * Sometimes the key or theProperties is null 
+         * 
+         * 02-24 17:16:37.980: V/TDDatabase(5291): Buffer size is 128
+02-24 17:16:37.990: E/TDDatabase(5291): Exception in TDRouter on null
+02-24 17:16:37.990: E/TDDatabase(5291): java.lang.reflect.InvocationTargetException
+02-24 17:16:37.990: E/TDDatabase(5291):   at java.lang.reflect.Method.invokeNative(Native Method)
+02-24 17:16:37.990: E/TDDatabase(5291):   at java.lang.reflect.Method.invoke(Method.java:511)
+02-24 17:16:37.990: E/TDDatabase(5291):   at com.couchbase.touchdb.router.TDRouter.start(TDRouter.java:390)
+02-24 17:16:37.990: E/TDDatabase(5291):   at com.couchbase.touchdb.listener.TDHTTPServlet.service(TDHTTPServlet.java:108)
+02-24 17:16:37.990: E/TDDatabase(5291):   at javax.servlet.http.HttpServlet.service(HttpServlet.java:802)
+02-24 17:16:37.990: E/TDDatabase(5291):   at Acme.Serve.Serve$ServeConnection.runServlet(Serve.java:2347)
+02-24 17:16:37.990: E/TDDatabase(5291):   at Acme.Serve.Serve$ServeConnection.parseRequest(Serve.java:2266)
+02-24 17:16:37.990: E/TDDatabase(5291):   at Acme.Serve.Serve$ServeConnection.run(Serve.java:2056)
+02-24 17:16:37.990: E/TDDatabase(5291):   at Acme.Utils$ThreadPool$PooledThread.run(Utils.java:1223)
+02-24 17:16:37.990: E/TDDatabase(5291):   at java.lang.Thread.run(Thread.java:856)
+02-24 17:16:37.990: E/TDDatabase(5291): Caused by: java.lang.NullPointerException
+02-24 17:16:37.990: E/TDDatabase(5291):   at com.couchbase.touchdb.TDBody.getPropertyForKey(TDBody.java:124)
+02-24 17:16:37.990: E/TDDatabase(5291):   at com.couchbase.touchdb.router.TDRouter.update(TDRouter.java:1194)
+02-24 17:16:37.990: E/TDDatabase(5291):   at com.couchbase.touchdb.router.TDRouter.update(TDRouter.java:1240)
+02-24 17:16:37.990: E/TDDatabase(5291):   at com.couchbase.touchdb.router.TDRouter.do_POST_Database(TDRouter.java:677)
+02-24 17:16:37.990: E/TDDatabase(5291):   ... 10 more
+         */
         return theProperties.get(key);
     }
 

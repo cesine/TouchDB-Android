@@ -119,7 +119,7 @@ public class TDRemoteRequest implements Runnable {
             byte[] bodyBytes = null;
             try {
                 bodyBytes = TDServer.getObjectMapper().writeValueAsBytes(body);
-            } catch (Exception e) {
+            }catch (Exception e) {
                 Log.e(TDDatabase.TAG, "Error serializing body of request", e);
             }
             ByteArrayEntity entity = new ByteArrayEntity(bodyBytes);
@@ -143,14 +143,20 @@ public class TDRemoteRequest implements Runnable {
                 	try {
 	                    InputStream stream = temp.getContent();
 	                    fullBody = TDServer.getObjectMapper().readValue(stream, Object.class);
-                	} finally {
-                		try { temp.consumeContent(); } catch (IOException e) {}
-                	}
+                    } finally {
+                        try {
+                            temp.consumeContent();
+                        } catch (IOException e) {
+                            Log.w(TDDatabase.TAG, "Error", e);
+                        }
+                    }
                 }
             }
         } catch (ClientProtocolException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
             error = e;
         } catch (IOException e) {
+            Log.w(TDDatabase.TAG, "Error", e);
             error = e;
         }
         respondWithResult(fullBody, error);
