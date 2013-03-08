@@ -138,7 +138,7 @@ public abstract class TouchDBTestCase extends InstrumentationTestCase {
     }
 
     protected URL getReplicationURL() throws MalformedURLException {
-        if(getReplicationAdminUser() != null) {
+        if(getReplicationAdminUser() != null && !"".equals(getReplicationAdminUser())) {
             return new URL(String.format("%s://%s:%s@%s:%d/%s", getReplicationProtocol(), getReplicationAdminUser(), getReplicationAdminPassword(), getReplicationServer(), getReplicationPort(), getReplicationDatabase()));
         } else {
             return new URL(String.format("%s://%s:%d/%s", getReplicationProtocol(), getReplicationServer(), getReplicationPort(), getReplicationDatabase()));
