@@ -11,6 +11,12 @@ import java.util.HashSet;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
+import org.codehaus.jackson.node.JsonNodeFactory;
+import org.codehaus.jackson.node.ObjectNode;
+import org.ektorp.CouchDbConnector;
+import org.ektorp.CouchDbInstance;
+import org.ektorp.impl.StdCouchDbInstance;
+import org.ektorp.support.CouchDbDocument;
 
 import junit.framework.Assert;
 import android.content.Intent;
@@ -155,18 +161,19 @@ public class Replicator extends TouchDBTestCase {
                     "sample_attachment_image1.jpg", "image/jpeg", rev3.getGeneration());
             Assert.assertEquals(TDStatus.CREATED, status.getCode());
 
-            fileStream2 = new FileInputStream(
-                    "/data/data/com.couchbase.touchdb.testapp/files/sample_attachment_image2.jpg");
-            byte[] secondImageAttachment = IOUtils.toByteArray(fileStream2);
-            if (secondImageAttachment.length == 0) {
-                sampleFilesExistAndWereCopied = false;
-            }
-            status = database.insertAttachmentForSequenceWithNameAndType(
-                    new ByteArrayInputStream(secondImageAttachment), rev3.getSequence(),
-                    "sample_attachment_image2.jpg", "image/jpeg", rev3.getGeneration());
-            Assert.assertEquals(TDStatus.CREATED, status.getCode());
-
             if (putInAlotOfImages) {
+                
+                fileStream2 = new FileInputStream(
+                        "/data/data/com.couchbase.touchdb.testapp/files/sample_attachment_image2.jpg");
+                byte[] secondImageAttachment = IOUtils.toByteArray(fileStream2);
+                if (secondImageAttachment.length == 0) {
+                    sampleFilesExistAndWereCopied = false;
+                }
+                status = database.insertAttachmentForSequenceWithNameAndType(
+                        new ByteArrayInputStream(secondImageAttachment), rev3.getSequence(),
+                        "sample_attachment_image2.jpg", "image/jpeg", rev3.getGeneration());
+                Assert.assertEquals(TDStatus.CREATED, status.getCode());
+                
                 int totalThreeImagesCanUpload = 1;
                 int totalFourImagesRunsOutOfMemory = 2;
                 
@@ -204,7 +211,6 @@ public class Replicator extends TouchDBTestCase {
          * res/raw to the sdacard
          */
         Assert.assertTrue(sampleFilesExistAndWereCopied);
-
         final TDReplicator repl = database.getReplicator(remote, true, false);
         ((TDPusher) repl).setCreateTarget(true);
         runTestOnUiThread(new Runnable() {
@@ -218,10 +224,50 @@ public class Replicator extends TouchDBTestCase {
         });
 
         while (repl.isRunning()) {
-            Log.i(TAG, "Waiting for replicator to finish");
+            Log.i(TAG, "Waiting for first replicator to finish");
             Thread.sleep(1000);
         }
         Assert.assertEquals("3", repl.getLastSequence());
+        
+    }
+    
+    public void testSecondAttachmentPusher() throws Throwable {
+        
+        testAttachmentPusher();
+        
+        // Now update the document without modifying the attachments
+        TDRevision readRev = database.getDocumentWithIDAndRev("doc2", null, EnumSet.noneOf(TDDatabase.TDContentOptions.class));
+        Assert.assertNotNull(readRev);
+        Map<String,Object> readRevProps = readRev.getProperties();
+        readRevProps = readRev.getProperties();
+        readRevProps.put("status", "updated!");
+        TDStatus status = new TDStatus();
+        TDRevision rev4 = database.putRevision(new TDRevision(readRevProps), readRev.getRevId(), true, status);
+        Assert.assertEquals(TDStatus.CREATED, status.getCode());
+        
+        readRevProps.put("secondupdate", "updated!");
+        database.putRevision(new TDRevision(readRevProps), rev4.getRevId(), true, status);
+        Assert.assertEquals(TDStatus.CREATED, status.getCode());
+
+        URL remote = getReplicationURL();
+        final TDReplicator secondReplication = database.getReplicator(remote, true, false);
+        ((TDPusher) secondReplication).setCreateTarget(true);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // Push them to the remote:
+                secondReplication.start();
+                Assert.assertTrue(secondReplication.isRunning());
+            }
+        });
+
+        while (secondReplication.isRunning()) {
+            Log.i(TAG, "Waiting for second replicator to finish");
+            Thread.sleep(1000);
+        }
+        
+        // Unable to get second replication (to get to revision 5) after one replication. 
+        Assert.assertEquals("5", secondReplication.getLastSequence());
     }
     
     public void testPuller() throws Throwable {
