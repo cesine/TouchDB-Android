@@ -114,6 +114,26 @@ public class TDRemoteRequest implements Runnable {
 
         request.addHeader("Accept", "application/json");
 
+        /*
+         * Notes From Jens on bug: worked around the bug by computing the body
+         * length (by adding up the sizes of the attachment files and MIME
+         * boundary strings) then set that as a Content-Length header on the
+         * request; this tells the HTTP library I use (NSURLConnection on Mac
+         * OS) not to use chunked encoding.
+         * 
+         * The plan: Put "follows" in the attachment it self, and an indicator
+         * outside in the document which will be processed when we do the
+         * upload. For now the indicator is something like
+         * '_multipartAttachmentFollows131223413' Each will become added to the
+         * binary blob we upload. Using Apache multipart upload doesn't seem to
+         * work with CouchDB (wrong number of line breaks as far as I can see)
+         * so lets start by trying to roll our own like the iOS version of
+         * Touchdb
+         * 
+         * TODO somewhere here turn follows attachment files into a hand rolled
+         * multipart upload.
+         */
+        
         //set body if appropriate
         if(body != null && request instanceof HttpEntityEnclosingRequestBase) {
             byte[] bodyBytes = null;

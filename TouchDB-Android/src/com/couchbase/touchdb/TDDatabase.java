@@ -74,7 +74,7 @@ public class TDDatabase extends Observable {
      * Options for what metadata to include in document bodies
      */
     public enum TDContentOptions {
-        TDIncludeAttachments, TDIncludeConflicts, TDIncludeRevs, TDIncludeRevsInfo, TDIncludeLocalSeq, TDNoBody
+        TDIncludeAttachments, TDIncludeConflicts, TDIncludeRevs, TDIncludeRevsInfo, TDIncludeLocalSeq, TDNoBody, TDMultipartAttachments
     }
 
     private static final Set<String> KNOWN_SPECIAL_KEYS;
@@ -586,7 +586,8 @@ public class TDDatabase extends Observable {
 
         // Get attachment metadata, and optionally the contents:
         boolean withAttachments = contentOptions.contains(TDContentOptions.TDIncludeAttachments);
-        Map<String, Object> attachmentsDict = getAttachmentsDictForSequenceWithContent(sequenceNumber, withAttachments);
+        boolean withMultipartAttachments = contentOptions.contains(TDContentOptions.TDMultipartAttachments);
+        Map<String, Object> attachmentsDict = getAttachmentsDictForSequenceWithContent(sequenceNumber, withAttachments, withMultipartAttachments);
 
         // Get more optional stuff to put in the properties:
         //OPT: This probably ends up making redundant SQL queries if multiple options are enabled.
@@ -1471,7 +1472,7 @@ public class TDDatabase extends Observable {
     /**
      * Constructs an "_attachments" dictionary for a revision, to be inserted in its JSON body.
      */
-    public Map<String,Object> getAttachmentsDictForSequenceWithContent(long sequence, boolean withContent) {
+    public Map<String,Object> getAttachmentsDictForSequenceWithContent(long sequence, boolean withContent, boolean withMultipartAttachments ) {
         assert(sequence > 0);
 
         Cursor cursor = null;
@@ -1491,24 +1492,41 @@ public class TDDatabase extends Observable {
                 byte[] keyData = cursor.getBlob(1);
                 TDBlobKey key = new TDBlobKey(keyData);
                 String digestString = "sha1-" + Base64.encodeBytes(keyData);
-                String dataBase64 = null;
-                if(withContent) {
-                    byte[] data = attachments.blobForKey(key);
-                    if(data != null) {
-                        dataBase64 = Base64.encodeBytes(data);
-                    }
-                    else {
-                        Log.w(TDDatabase.TAG, "Error loading attachment");
+                
+                /*
+                 * The multipart attachment upload plan: Put "follows" in the
+                 * attachment it self, and an indicator
+                 * '_multipartAttachmentFollows131223413' in the document which
+                 * will be processed as a multipart attachment in the context of
+                 * upload.
+                 */
+                Map<String, Object> attachment = new HashMap<String, Object>();
+                if (!withContent) {
+                    Log.d(TAG, "Stubbing attachments.");
+                    attachment.put("stub", true);
+                }else{
+                    if (withMultipartAttachments) {
+                        Log.d(TAG, "Marking attachments as follows.");
+                        attachment.put("follows", true);
+                        /* TODO test this */
+                        result.put("_multipartAttachmentFollows"+System.currentTimeMillis(), attachments.pathForKey(key));
+                    } else {
+                        Log.d(TAG, "In-lining attachments.");
+                        String dataBase64 = null;
+                        byte[] data = attachments.blobForKey(key);
+                        if (data != null) {
+                            dataBase64 = Base64.encodeBytes(data);
+                        } else {
+                            Log.w(TDDatabase.TAG, "Error loading attachment");
+                        }
+                        if (dataBase64 == null) {
+                            attachment.put("stub", true);
+                        } else {
+                            attachment.put("data", dataBase64);
+                        }
                     }
                 }
 
-                Map<String, Object> attachment = new HashMap<String, Object>();
-                if(dataBase64 == null) {
-                    attachment.put("stub", true);
-                }
-                else {
-                    attachment.put("data", dataBase64);
-                }
                 attachment.put("digest", digestString);
                 attachment.put("content_type", cursor.getString(2));
                 attachment.put("length", cursor.getInt(3));

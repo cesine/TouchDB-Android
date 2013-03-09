@@ -185,6 +185,7 @@ public class TDPusher extends TDReplicator implements Observer {
                                     // OPT: Shouldn't include all attachment bodies, just ones that have changed
                                     // OPT: Should send docs with many or big attachments as multipart/related
                                     TDStatus status = db.loadRevisionBody(rev, EnumSet.of(TDDatabase.TDContentOptions.TDIncludeAttachments));
+//                                    TDStatus status = db.loadRevisionBody(rev, EnumSet.of(TDDatabase.TDContentOptions.TDIncludeAttachments,  TDDatabase.TDContentOptions.TDMultipartAttachments));
                                     if(!status.isSuccessful()) {
                                         Log.w(TDDatabase.TAG, String.format("%s: Couldn't get local contents of %s", this, rev));
                                     } else {
