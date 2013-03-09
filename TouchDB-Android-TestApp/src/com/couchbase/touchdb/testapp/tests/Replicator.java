@@ -11,12 +11,6 @@ import java.util.HashSet;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
-import org.codehaus.jackson.node.JsonNodeFactory;
-import org.codehaus.jackson.node.ObjectNode;
-import org.ektorp.CouchDbConnector;
-import org.ektorp.CouchDbInstance;
-import org.ektorp.impl.StdCouchDbInstance;
-import org.ektorp.support.CouchDbDocument;
 
 import junit.framework.Assert;
 import android.content.Intent;
