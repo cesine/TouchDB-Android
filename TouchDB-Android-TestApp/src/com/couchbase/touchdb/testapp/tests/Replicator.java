@@ -934,10 +934,9 @@ public class Replicator extends TouchDBTestCase {
         HttpPut request = new HttpPut(getReplicationURL() + "/" + docid);
 
         /*
-         * Try a simple doc request like the one in the CouchDB wiki to see if
-         * it will go through
+         * Try a simple doc request to see if it will go through
          */
-        String simpledoctext = "{\"body\":\"This is a simple document with nothing really in it, but it uses the multipart upload.\"}";
+        String simpledoctext = "{\"body\":\"This is a simple document with nothing really in it.\"}";
         ((HttpEntityEnclosingRequestBase) request)
                 .setEntity(new ByteArrayEntity(simpledoctext.getBytes()));
         HttpResponse response = httpClient.execute(request, localContext);
