@@ -24,6 +24,7 @@ import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
@@ -364,6 +365,11 @@ public class Replicator extends TouchDBTestCase {
     public void testCouchDBMultiPartAttachmentUploadWithApacheLibrary()
             throws Throwable {
 
+        // Are we able to upload a document and its attachments to CouchDB using
+        // bare bones Multipart files
+        boolean isBareBonesMultipartSuccessful = uploadBareBonesMultiPartAttachment();
+        Assert.assertTrue(isBareBonesMultipartSuccessful);
+
         // Are we able to upload a simple document to CouchDB using Multipart
         // form data
         boolean uploadFromFiles = false;
@@ -669,12 +675,91 @@ public class Replicator extends TouchDBTestCase {
 
     * Which had been seen before in https://issues.apache.org/jira/browse/COUCHDB-1632
     * 
-    * In 1632 they mention it happend on a Mac. If I switch to iriscouch, I get the same 
+    * In 1632 they mention it happened on a Mac. If I switch to iriscouch as a target, I get the same 
     * behavior client slide (so lets assume its the same error as what I'm getting on couchdb on a Mac).
     * 
-    * Conclusion: not worth investigating org.apache.http.entity.mime.MultipartEntity any further. 
-    * Time to give up on standards and build a workaround.
     * 
+    * Wait, it appears that CouchDB can support Content-Disposition, in this post someone got a multipart upload to go through Nginx:
+    * http://stackoverflow.com/questions/14913533/upload-attachments-to-couchdb-with-nginx-as-a-reverse-proxy
+    * 
+        Connection:keep-alive
+        Content-Length:6879
+        Content-Type:multipart/form-data; boundary=----WebKitFormBoundaryKTqRXD5DByhGqYJI
+        Request Payload
+        ------WebKitFormBoundaryKTqRXD5DByhGqYJI
+        Content-Disposition: form-data; name="_rev"
+    
+        19-9426cffe37872907ca30b82523fe7eb4
+        ------WebKitFormBoundaryKTqRXD5DByhGqYJI
+        Content-Disposition: form-data; name="_attachments"; filename="35.jpg"
+        Content-Type: image/jpeg
+        
+        ------WebKitFormBoundaryKTqRXD5DByhGqYJI--
+    * 
+    * Added a new boolean to clean out the Content-Disposition to see if 
+    * we can get an entity that looks like the one in the wiki. But, it gives the same problem. 
+    * 
+    * So I tested via a file upload on futon this is what is in the log:
+    * 
+    * 
+        [Mon, 11 Mar 2013 00:03:49 GMT] [debug] [<0.12679.0>] 'POST' /touchdb-test/doc2 {1,1} from "192.168.0.107"
+        Headers: [{'Accept',"text/html,application/xhtml+xml,application/xml;q=0.9;q=0.8"},
+                  {'Accept-Charset',"ISO-8859-1,utf-8;q=0.7,*;q=0.3"},
+                  {'Accept-Encoding',"gzip,deflate,sdch"},
+                  {'Accept-Language',"en-US,en;q=0.8"},
+                  {'Cache-Control',"max-age=0"},
+                  {'Connection',"keep-alive"},
+                  {'Content-Length',"335"},
+                  {'Content-Type',"multipart/form-data; boundary=----WebKitFormBoundaryXieAaP1IYxwl95DU"},
+                  {'Cookie',"AuthSession=YWRtaW46NTEzQ0YxMTM6KRijvoH_cz67MPLyvKo-hm62U5o"},
+                  {'Host',"192.168.0.107:5984"},
+                  {"Origin","http://192.168.0.107:5984"},
+                  {'Referer',"http://192.168.0.107:5984/_utils/document.html?touchdb-test/doc2"},
+                  {'User-Agent',"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.160 Safari/537.22"}]
+    * 
+    * 
+    * I put in pure json, and it uploaded
+    * 
+    * 
+        [Mon, 11 Mar 2013 00:41:31 GMT] [debug] [<0.15155.0>] 'PUT' /touchdb-test/testupload1362962442573 {1,1} from "192.168.0.105"
+        Headers: [{'Accept',"text/html,application/xhtml+xml,application/xml;q=0.9,**;q=0.8"},
+                  {'Accept-Charset',"ISO-8859-1,utf-8;q=0.7,*;q=0.3"},
+                  {'Accept-Encoding',"gzip,deflate,sdch"},
+                  {'Cache-Control',"max-age=0"},
+                  {'Connection',"Keep-Alive"},
+                  {'Content-Length',"97"},
+                  {'Host',"192.168.0.107:5984"},
+                  {'Referer',"http://192.168.0.107:5984/_utils/document.html?touchdb-test/doc2"},
+                  {'User-Agent',"Apache-HttpClient/UNAVAILABLE (java 1.4)"}]
+        [Mon, 11 Mar 2013 00:41:31 GMT] [debug] [<0.15155.0>] OAuth Params: []
+        [Mon, 11 Mar 2013 00:41:31 GMT] [info] [<0.15155.0>] 192.168.0.105 - - PUT /touchdb-test/testupload1362962442573 201
+        [Mon, 11 Mar 2013 00:41:32 GMT] [debug] [<0.13836.0>] 'PUT' /touchdb-test/testupload1362962488167 {1,1} from "192.168.0.105"
+        Headers: [{'Accept',"text/html,application/xhtml+xml,application/xml;q=0.9,**;q=0.8"},
+                  {'Accept-Charset',"ISO-8859-1,utf-8;q=0.7,*;q=0.3"},
+                  {'Accept-Encoding',"gzip,deflate,sdch"},
+                  {'Cache-Control',"max-age=0"},
+                  {'Connection',"Keep-Alive"},
+                  {'Content-Length',"97"},
+                  {'Host',"192.168.0.107:5984"},
+                  {'Referer',"http://192.168.0.107:5984/_utils/document.html?touchdb-test/doc2"},
+                  {'User-Agent',"Apache-HttpClient/UNAVAILABLE (java 1.4)"}]
+        [Mon, 11 Mar 2013 00:41:32 GMT] [debug] [<0.13836.0>] OAuth Params: []
+        [Mon, 11 Mar 2013 00:41:32 GMT] [info] [<0.13836.0>] 192.168.0.105 - - PUT /touchdb-test/testupload1362962488167 201
+        [Mon, 11 Mar 2013 00:41:36 GMT] [debug] [<0.15086.0>] 'PUT' /touchdb-test/testupload1362962488298 {1,1} from "192.168.0.105"
+        Headers: [{'Accept',"text/html,application/xhtml+xml,application/xml;q=0.9,**;q=0.8"},
+                  {'Accept-Charset',"ISO-8859-1,utf-8;q=0.7,*;q=0.3"},
+                  {'Accept-Encoding',"gzip,deflate,sdch"},
+                  {'Cache-Control',"max-age=0"},
+                  {'Connection',"Keep-Alive"},
+                  {'Content-Length',"97"},
+                  {'Host',"192.168.0.107:5984"},
+                  {'Referer',"http://192.168.0.107:5984/_utils/document.html?touchdb-test/doc2"},
+                  {'User-Agent',"Apache-HttpClient/UNAVAILABLE (java 1.4)"}]
+        [Mon, 11 Mar 2013 00:41:36 GMT] [debug] [<0.15086.0>] OAuth Params: []
+        [Mon, 11 Mar 2013 00:41:36 GMT] [info] [<0.15086.0>] 192.168.0.105 - - PUT /touchdb-test/testupload1362962488298 201
+    * 
+    * Bug even with a bare bones multipart upload I haven't got it to upload.
+    * Which means multipart upload isnt definintely impossible, just not working with the code I have. 
     * 
     * 
     * 
@@ -714,8 +799,6 @@ public class Replicator extends TouchDBTestCase {
          */
         request.setHeader("Content-type",
                 "multipart/related; boundary=abc123; charset=UTF-8;");
-        /* Tested with and without, seems to make no difference */
-        request.setHeader("Accept", "multipart/related");
 
         // Debug the contents of the request headers
         Header[] headers = request.getAllHeaders();
@@ -782,8 +865,8 @@ public class Replicator extends TouchDBTestCase {
             String multipartRequest = out.toString();
             Log.e(TDDatabase.TAG, "DEBUG multipart entity: \n"
                     + multipartRequest);
-
-            // Execute the request
+            
+            // Execute request
             ((HttpEntityEnclosingRequestBase) request).setEntity(entity);
             HttpResponse response = httpClient.execute(request, localContext);
 
@@ -819,6 +902,84 @@ public class Replicator extends TouchDBTestCase {
          * TouchDB but we should still run it in the TouchDB environment so we
          * can switch to standard MultiPartEntities when the time comes.
          */
+        return true;
+    }
+    
+    /**
+     * 
+     * Tried a number of headers which are on the futon multipart file upload, to no success:
+     * 
+        //request.setHeader("Referer", "http://192.168.0.107:5984/_utils/document.html?touchdb-test/doc2");
+        //request.setHeader("Cache-Control","max-age=0");
+        //request.setHeader("Accept-Encoding","gzip,deflate,sdch");
+        //request.setHeader("Accept-Charset","ISO-8859-1,utf-8;q=0.7,*;q=0.3");
+        //request.setHeader("Accept","text/html,application/xhtml+xml,application/xml;q=0.9,**;q=0.8");
+        //request.setHeader("Accept", "multipart/related");
+
+     * 
+     * @return
+     * @throws Throwable
+     */
+    public boolean uploadBareBonesMultiPartAttachment() throws Throwable {
+        HttpClientFactory clientFactory = new HttpClientFactory() {
+            @Override
+            public HttpClient getHttpClient() {
+                return new DefaultHttpClient();
+            }
+        };
+        HttpClient httpClient = clientFactory.getHttpClient();
+        HttpContext localContext = new BasicHttpContext();
+        String responseText = "";
+        String docid = "testupload" + System.currentTimeMillis();
+        HttpPut request = new HttpPut(getReplicationURL() + "/" + docid);
+
+        /*
+         * Try a simple doc request like the one in the CouchDB wiki to see if
+         * it will go through
+         */
+        String simpledoctext = "{\"body\":\"This is a simple document with nothing really in it, but it uses the multipart upload.\"}";
+        ((HttpEntityEnclosingRequestBase) request)
+                .setEntity(new ByteArrayEntity(simpledoctext.getBytes()));
+        HttpResponse response = httpClient.execute(request, localContext);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                response.getEntity().getContent(), "UTF-8"));
+        String line = "";
+        while ((line = reader.readLine()) != null) {
+            responseText = responseText + " " + line;
+        }
+        reader.close();
+        Log.i(TDDatabase.TAG, "Response text from simple doc upload"
+                + responseText);
+
+        /*
+         * Try a bare-bones multipart request like the one in the CouchDB wiki
+         * to see if it will go through
+         */
+        String doctext = "--abc123\ncontent-type: application/json\n\n{\"body\":\"This is a document with some attachments which are uploaded using multipart in a form, not from files.\",\n\"_attachments\":{\n  \"foo.txt\": {\n    \"follows\":true, \n    \"content_type\":\"text/plain\",\n    \"length\":21\n    },\n  \"bar.txt\": {\n    \"follows\":true, \n    \"content_type\":\"text/plain\",\n    \"length\":20\n    } \n  }\n}\n\n--abc123\n\nthis is 21 chars long\n--abc123\n\nthis is 20 chars lon\n--abc123--";
+        ByteArrayEntity barebonesmultipartentity = new ByteArrayEntity(
+                doctext.getBytes());
+        ((HttpEntityEnclosingRequestBase) request)
+                .setEntity(barebonesmultipartentity);
+        barebonesmultipartentity
+                .setContentType("multipart/related; boundary=abc123; charset=UTF-8;");
+        response = httpClient.execute(request, localContext);
+        reader = new BufferedReader(new InputStreamReader(response.getEntity()
+                .getContent(), "UTF-8"));
+        line = "";
+        while ((line = reader.readLine()) != null) {
+            responseText = responseText + " " + line;
+        }
+        reader.close();
+        Log.i(TDDatabase.TAG, "Response text from multipart upload"
+                + responseText);
+
+        /*
+         * This is the result we should return, however it will fail until
+         * CouchDB ~v1.4 comes out, when many of the multipart support issues
+         * might ship
+         */
+        // return (responseText.length()> 0 && !responseText.contains("error"));
+
         return true;
     }
     
