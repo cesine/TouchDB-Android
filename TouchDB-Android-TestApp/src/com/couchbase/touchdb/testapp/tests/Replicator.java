@@ -21,17 +21,22 @@ import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import junit.framework.Assert;
 import android.content.Intent;
@@ -414,7 +419,9 @@ public class Replicator extends TouchDBTestCase {
      * Couchdb can handle a 100 Continue: https://issues.apache.org/jira/browse/COUCHDB-433
      * http://mail-archives.apache.org/mod_mbox/couchdb-dev/200912.mbox/%3C91510288.1261168278176.JavaMail.jira@brutus%3E
      * https://issues.apache.org/jira/browse/COUCHDB-1368
-     * 
+     * https://groups.google.com/forum/?fromgroups=#!topic/couchdb-user-archive/SAOkhQHklKc
+     * http://grokbase.com/t/couchdb/user/131xa2e0h4/bad-request-referer-must-match-host
+     * http://stackoverflow.com/questions/13281021/how-to-set-a-standalone-attachment-content-type
      * 
      * Curl with documents:
      * curl -vkX PUT https://admin:none@localhost:6984/testdb/basicdoc -d '{"title":"Blackened Sky","artist":"Biffy Clyro","year":2002}'
@@ -699,8 +706,16 @@ public class Replicator extends TouchDBTestCase {
     * Added a new boolean to clean out the Content-Disposition to see if 
     * we can get an entity that looks like the one in the wiki. But, it gives the same problem. 
     * 
-    * So I tested via a file upload on futon this is what is in the log:
+    * Even with a bare bones multipart upload, I haven't got it to upload.
+    * Which means multipart upload isnt definintely impossible, it's just not working with the code I have tried thus far. 
     * 
+    *  POST like in futon
+    * "As of 0.11 CouchDB supports handling of multipart/form-data encoded updates. This is used by Futon and not considered a public API. All such requests must contain a valid Referer header."
+    * 
+    * 
+    * So I tested via a file upload on futon, and found that Chrome/jquery couch sends Content-Disposition.
+    * So CouchDB might be able to handle a normal Multipart upload, there is something wrong with my code.
+    * his is what is in the log when uploading a file via futon:
     * 
         [Mon, 11 Mar 2013 00:03:49 GMT] [debug] [<0.12679.0>] 'POST' /touchdb-test/doc2 {1,1} from "192.168.0.107"
         Headers: [{'Accept',"text/html,application/xhtml+xml,application/xml;q=0.9;q=0.8"},
@@ -716,60 +731,124 @@ public class Replicator extends TouchDBTestCase {
                   {"Origin","http://192.168.0.107:5984"},
                   {'Referer',"http://192.168.0.107:5984/_utils/document.html?touchdb-test/doc2"},
                   {'User-Agent',"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.160 Safari/537.22"}]
-    * 
-    * 
-    * I put in pure json, and it uploaded
-    * 
-    * 
-        [Mon, 11 Mar 2013 00:41:31 GMT] [debug] [<0.15155.0>] 'PUT' /touchdb-test/testupload1362962442573 {1,1} from "192.168.0.105"
-        Headers: [{'Accept',"text/html,application/xhtml+xml,application/xml;q=0.9,**;q=0.8"},
-                  {'Accept-Charset',"ISO-8859-1,utf-8;q=0.7,*;q=0.3"},
-                  {'Accept-Encoding',"gzip,deflate,sdch"},
-                  {'Cache-Control',"max-age=0"},
-                  {'Connection',"Keep-Alive"},
-                  {'Content-Length',"97"},
+   
+     * 
+     * Tried a number of headers which are on the futon multipart file upload, to no success:
+     * 
+        //request.setHeader("Referer", "http://192.168.0.107:5984/_utils/document.html?touchdb-test/doc2");
+        //request.setHeader("Cache-Control","max-age=0");
+        //request.setHeader("Accept-Encoding","gzip,deflate,sdch");
+        //request.setHeader("Accept-Charset","ISO-8859-1,utf-8;q=0.7,*;q=0.3");
+        //request.setHeader("Accept","text/html,application/xhtml+xml,application/xml;q=0.9,**;q=0.8");
+        //request.setHeader("Accept", "multipart/related");
+
+
+     * Digging into the futon file upload:
+            1 requests  ❘  13 B transferred
+            testing
+            /testdb
+            
+            POST http://cesine.iriscouch.com/testdb/testing HTTP/1.1
+            Accept: text/html,application/xhtml+xml,application/xml;q=0.9,**;q=0.8
+            Referer: http://cesine.iriscouch.com/_utils/document.html?testdb/testing
+            Origin: http://cesine.iriscouch.com
+            User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.160 Safari/537.22
+            Content-Type: multipart/form-data; boundary=----WebKitFormBoundarysrZ8kAMDhk5CTqQ4
+           
+            Request Payload
+            
+            ------WebKitFormBoundarysrZ8kAMDhk5CTqQ4
+            Content-Disposition: form-data; name="_attachments"; filename="13 - 3 - Hash Tables Implementation Details Part II (22 min).mp4"
+            Content-Type: video/mp4
+            
+            
+            ------WebKitFormBoundarysrZ8kAMDhk5CTqQ4
+            Content-Disposition: form-data; name="_rev"
+            
+            1-ff72bef552cbbe9a6d62a1a6f4844a34
+            ------WebKitFormBoundarysrZ8kAMDhk5CTqQ4--
+     * 
+     * 
+     * 
+     * 
+     * 
+     * 
+        [Mon, 11 Mar 2013 16:58:20 GMT] [debug] [<0.17203.1>] 'PUT' /touchdb-test/testuploadwithattachmentslater1363021081681 {1,
+                                                                                       1} from "192.168.0.105"
+        Headers: [{'Connection',"Keep-Alive"},
+                  {'Content-Length',"68"},
                   {'Host',"192.168.0.107:5984"},
-                  {'Referer',"http://192.168.0.107:5984/_utils/document.html?touchdb-test/doc2"},
                   {'User-Agent',"Apache-HttpClient/UNAVAILABLE (java 1.4)"}]
-        [Mon, 11 Mar 2013 00:41:31 GMT] [debug] [<0.15155.0>] OAuth Params: []
-        [Mon, 11 Mar 2013 00:41:31 GMT] [info] [<0.15155.0>] 192.168.0.105 - - PUT /touchdb-test/testupload1362962442573 201
-        [Mon, 11 Mar 2013 00:41:32 GMT] [debug] [<0.13836.0>] 'PUT' /touchdb-test/testupload1362962488167 {1,1} from "192.168.0.105"
+        [Mon, 11 Mar 2013 16:58:20 GMT] [debug] [<0.17203.1>] OAuth Params: []
+        [Mon, 11 Mar 2013 16:58:20 GMT] [info] [<0.17203.1>] 192.168.0.105 - - PUT /touchdb-test/testuploadwithattachmentslater1363021081681 201
+        [Mon, 11 Mar 2013 16:59:17 GMT] [debug] [<0.17203.1>] 'POST' /touchdb-test/testuploadwithattachmentslater1363021081681 {1,
+                                                                                                1} from "192.168.0.105"
         Headers: [{'Accept',"text/html,application/xhtml+xml,application/xml;q=0.9,**;q=0.8"},
-                  {'Accept-Charset',"ISO-8859-1,utf-8;q=0.7,*;q=0.3"},
-                  {'Accept-Encoding',"gzip,deflate,sdch"},
-                  {'Cache-Control',"max-age=0"},
                   {'Connection',"Keep-Alive"},
-                  {'Content-Length',"97"},
+                  {'Content-Length',"324"},
+                  {'Content-Type',"multipart/form-data; boundary=----WebKitFormBoundarysrZ8kAMDhk5CTqQ4"},
                   {'Host',"192.168.0.107:5984"},
-                  {'Referer',"http://192.168.0.107:5984/_utils/document.html?touchdb-test/doc2"},
-                  {'User-Agent',"Apache-HttpClient/UNAVAILABLE (java 1.4)"}]
-        [Mon, 11 Mar 2013 00:41:32 GMT] [debug] [<0.13836.0>] OAuth Params: []
-        [Mon, 11 Mar 2013 00:41:32 GMT] [info] [<0.13836.0>] 192.168.0.105 - - PUT /touchdb-test/testupload1362962488167 201
-        [Mon, 11 Mar 2013 00:41:36 GMT] [debug] [<0.15086.0>] 'PUT' /touchdb-test/testupload1362962488298 {1,1} from "192.168.0.105"
-        Headers: [{'Accept',"text/html,application/xhtml+xml,application/xml;q=0.9,**;q=0.8"},
-                  {'Accept-Charset',"ISO-8859-1,utf-8;q=0.7,*;q=0.3"},
-                  {'Accept-Encoding',"gzip,deflate,sdch"},
-                  {'Cache-Control',"max-age=0"},
-                  {'Connection',"Keep-Alive"},
-                  {'Content-Length',"97"},
-                  {'Host',"192.168.0.107:5984"},
-                  {'Referer',"http://192.168.0.107:5984/_utils/document.html?touchdb-test/doc2"},
-                  {'User-Agent',"Apache-HttpClient/UNAVAILABLE (java 1.4)"}]
-        [Mon, 11 Mar 2013 00:41:36 GMT] [debug] [<0.15086.0>] OAuth Params: []
-        [Mon, 11 Mar 2013 00:41:36 GMT] [info] [<0.15086.0>] 192.168.0.105 - - PUT /touchdb-test/testupload1362962488298 201
-    * 
-    * Bug even with a bare bones multipart upload I haven't got it to upload.
-    * Which means multipart upload isnt definintely impossible, just not working with the code I have. 
-    * 
-    * 
-    * 
-    * @param fromFiles  if true will use files on the sdcard for the upload (more realistic), 
-    *                   otherwise uses StringBodys for the document and its attachments
-    * @param noAttachments if true will only try uploading a simple json document to couchdb 
-    *                   (base line test with only one body in the Mutlipart)
-    * @return boolean if the multipart upload was successfull or not
-    * @throws Throwable
-    */
+                  {"Origin","http://192.168.0.107:5984"},
+                  {'Referer',"http://192.168.0.107:5984/_utils/document.html?touchdb-test/testuploadwithattachmentslater1363021081681"},
+                  {'User-Agent',"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_5) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.160 Safari/537.22"}]
+        [Mon, 11 Mar 2013 16:59:17 GMT] [debug] [<0.17203.1>] OAuth Params: []
+        [Mon, 11 Mar 2013 16:59:17 GMT] [error] [<0.17203.1>] Uncaught error in HTTP request: {error,
+                                                               {badmatch,
+                                                                <<"------WebKitFormBoundarysrZ8kAMDhk5CTqQ4\nContent-Disposition: form-data; name=\"_attachments\"; filename=\"foo.txt\"\nContent-Type: text/plain\n\nthis is 21 chars long\n------WebKitFormBoundarysrZ8kAMDhk5CTqQ4\nContent-Disposition: form-data; name=\"_rev\"\n\n1-ba42879b06c25a936904f210e47ed91d\n------WebKitFormBoundarysrZ8kAMDhk5CTqQ4--">>}}
+        [Mon, 11 Mar 2013 16:59:17 GMT] [info] [<0.17203.1>] Stacktrace: [{mochiweb_multipart,
+                                           parse_multipart_request,2,
+                                           [{file,
+                                             "/Users/jan/Work/build-couchdb-mac/build-couchdb/git-build/https%3A%2F%2Fgit-wip-us.apache.org%2Frepos%2Fasf%2Fcouchdb.git%3Atags%2F1.2.1/src/mochiweb/mochiweb_multipart.erl"},
+                                            {line,138}]},
+                                          {mochiweb_multipart,parse_form,2,
+                                           [{file,
+                                             "/Users/jan/Work/build-couchdb-mac/build-couchdb/git-build/https%3A%2F%2Fgit-wip-us.apache.org%2Frepos%2Fasf%2Fcouchdb.git%3Atags%2F1.2.1/src/mochiweb/mochiweb_multipart.erl"},
+                                            {line,80}]},
+                                          {couch_httpd_db,db_doc_req,3,
+                                           [{file,
+                                             "/Users/jan/Work/build-couchdb-mac/build-couchdb/git-build/https%3A%2F%2Fgit-wip-us.apache.org%2Frepos%2Fasf%2Fcouchdb.git%3Atags%2F1.2.1/src/couchdb/couch_httpd_db.erl"},
+                                            {line,700}]},
+                                          {couch_httpd_db,do_db_req,2,
+                                           [{file,
+                                             "/Users/jan/Work/build-couchdb-mac/build-couchdb/git-build/https%3A%2F%2Fgit-wip-us.apache.org%2Frepos%2Fasf%2Fcouchdb.git%3Atags%2F1.2.1/src/couchdb/couch_httpd_db.erl"},
+                                            {line,230}]},
+                                          {couch_httpd,handle_request_int,5,
+                                           [{file,
+                                             "/Users/jan/Work/build-couchdb-mac/build-couchdb/git-build/https%3A%2F%2Fgit-wip-us.apache.org%2Frepos%2Fasf%2Fcouchdb.git%3Atags%2F1.2.1/src/couchdb/couch_httpd.erl"},
+                                            {line,317}]},
+                                          {mochiweb_http,headers,5,
+                                           [{file,
+                                             "/Users/jan/Work/build-couchdb-mac/build-couchdb/git-build/https%3A%2F%2Fgit-wip-us.apache.org%2Frepos%2Fasf%2Fcouchdb.git%3Atags%2F1.2.1/src/mochiweb/mochiweb_http.erl"},
+                                            {line,136}]},
+                                          {proc_lib,init_p_do_apply,3,
+                                           [{file,"proc_lib.erl"},{line,227}]}]
+        [Mon, 11 Mar 2013 16:59:17 GMT] [error] [<0.17203.1>] Uncaught server error: {badmatch,
+                                                      <<"------WebKitFormBoundarysrZ8kAMDhk5CTqQ4\nContent-Disposition: form-data; name=\"_attachments\"; filename=\"foo.txt\"\nContent-Type: text/plain\n\nthis is 21 chars long\n------WebKitFormBoundarysrZ8kAMDhk5CTqQ4\nContent-Disposition: form-data; name=\"_rev\"\n\n1-ba42879b06c25a936904f210e47ed91d\n------WebKitFormBoundarysrZ8kAMDhk5CTqQ4--">>}
+        [Mon, 11 Mar 2013 16:59:17 GMT] [info] [<0.17203.1>] 192.168.0.105 - - POST /touchdb-test/testuploadwithattachmentslater1363021081681 500
+        [Mon, 11 Mar 2013 16:59:17 GMT] [debug] [<0.17203.1>] httpd 500 error response:
+         {"error":"badmatch","reason":"------WebKitFormBoundarysrZ8kAMDhk5CTqQ4\nContent-Disposition: form-data; name=\"_attachments\"; filename=\"foo.txt\"\nContent-Type: text/plain\n\nthis is 21 chars long\n------WebKitFormBoundarysrZ8kAMDhk5CTqQ4\nContent-Disposition: form-data; name=\"_rev\"\n\n1-ba42879b06c25a936904f210e47ed91d\n------WebKitFormBoundarysrZ8kAMDhk5CTqQ4--"}
+     * 
+     * 
+     * http://jimmyg.org/blog/2007/multipart-post-with-erlang-and-mochiweb.html
+     * 
+     * Looked at the attachment upload, it specifies the rev in the url, tried that and got 
+     * the entire multipart upload to insert into the attachment (not the mutlipart body corresponding to the file).
+     *
+     * Upload a file multipart standalone attachment to previously uploaded doc 
+     * * Put to the desired attachment with rev number 
+     * * inserts the entire multipart as the attachment. (not what we want)
+     * 
+     * 
+     * 
+     * 
+     * 
+     * @param fromFiles  if true will use files on the sdcard for the upload (more realistic), 
+     *                   otherwise uses StringBodys for the document and its attachments
+     * @param noAttachments if true will only try uploading a simple json document to couchdb 
+     *                   (base line test with only one body in the Mutlipart)
+     * @return boolean if the multipart upload was successfull or not
+     * @throws Throwable
+     */
     public boolean uploadNonTouchDBMultiPartAttachment(boolean fromFiles,
             boolean noAttachments) throws Throwable {
         HttpClientFactory clientFactory = new HttpClientFactory() {
@@ -907,16 +986,6 @@ public class Replicator extends TouchDBTestCase {
     
     /**
      * 
-     * Tried a number of headers which are on the futon multipart file upload, to no success:
-     * 
-        //request.setHeader("Referer", "http://192.168.0.107:5984/_utils/document.html?touchdb-test/doc2");
-        //request.setHeader("Cache-Control","max-age=0");
-        //request.setHeader("Accept-Encoding","gzip,deflate,sdch");
-        //request.setHeader("Accept-Charset","ISO-8859-1,utf-8;q=0.7,*;q=0.3");
-        //request.setHeader("Accept","text/html,application/xhtml+xml,application/xml;q=0.9,**;q=0.8");
-        //request.setHeader("Accept", "multipart/related");
-
-     * 
      * @return
      * @throws Throwable
      */
@@ -980,6 +1049,131 @@ public class Replicator extends TouchDBTestCase {
         // return (responseText.length()> 0 && !responseText.contains("error"));
 
         return true;
+    }
+    
+    /**
+     * This function tests the ideal attachment upload, that we check to see if
+     * the attachments are on the server? If not, we attach them to the server's
+     * revision, if yes, we upload the document with attachment stubs only.
+     * 
+     * This is code that I want to test before moving it into the pusher.
+     * 
+     * http://comments.gmane.org/gmane.comp.db.couchdb.user/19532
+     * 
+     * >>> The CouchDB replicator uses multipart/related PUT to send the
+     * document and all attachments (streamed) in a single request. The
+     * max_document_size (4gb, insanely, in couchdb, 64mb on cloudant) does not
+     * apply to streamed attachments or the multipart/related PUT method.
+     * 
+     * @return
+     * @throws Throwable
+     */
+    public boolean testStandaloneUploadAttachmentsIfNotOnServer() throws Throwable {
+        String docid = "testuploadwithattachmentslater"
+                + System.currentTimeMillis();
+
+        /*
+         * Upload simple doc so we can add an attachment to it
+         */
+        String simpledoctext = "{\"body\":\"This is a simple document with nothing really in it, yet.\"}";
+        HttpPut putrequest = new HttpPut(getReplicationURL() + "/" + docid);
+        ((HttpEntityEnclosingRequestBase) putrequest)
+                .setEntity(new ByteArrayEntity(simpledoctext.getBytes()));
+        JSONObject responseObj = executeAndLogHTTPResponse(putrequest);
+        String resultingRev = "";
+        if (responseObj != null) {
+            resultingRev = responseObj.getString("rev");
+        }
+        if (resultingRev == null || "".equals(resultingRev)) {
+            return false;
+        }
+
+
+        /*
+         * Upload a file standalone attachment to previously uploaded
+         * doc 
+         */
+        HttpPut multipartrequest = new HttpPut(getReplicationURL() + "/"
+                + docid +"/foo.txt?rev="+resultingRev);
+        ((HttpEntityEnclosingRequestBase) multipartrequest)
+                .setEntity(new FileEntity(new File(
+                "/sdcard/foo.txt"), "text/plain"));
+        responseObj = executeAndLogHTTPResponse(multipartrequest);
+        resultingRev = "";
+        if (responseObj != null) {
+            resultingRev = responseObj.getString("rev");
+        }
+        if (resultingRev == null || "".equals(resultingRev)) {
+            return false;
+        }
+        
+        /*
+         * Upload a second file
+         */
+        multipartrequest = new HttpPut(getReplicationURL() + "/"
+                + docid +"/bar.txt?rev="+resultingRev);
+        ((HttpEntityEnclosingRequestBase) multipartrequest)
+                .setEntity(new FileEntity(new File(
+                "/sdcard/bar.txt"), "text/plain"));
+        executeAndLogHTTPResponse(multipartrequest);
+        
+        
+        /*
+         * Now modify the document and upload (only the stubs)
+         */
+        HttpGet getDocBackRequest = new HttpGet(getReplicationURL() + "/"
+                + docid);
+        responseObj = executeAndLogHTTPResponse(getDocBackRequest);
+        responseObj.put("body", "Now upload the body, modified after it has attachments.");
+        putrequest = new HttpPut(getReplicationURL() + "/" + docid);
+        ((HttpEntityEnclosingRequestBase) putrequest)
+                .setEntity(new ByteArrayEntity(responseObj.toString().getBytes()));
+        executeAndLogHTTPResponse(putrequest);
+        
+       
+
+        return true;
+    }
+
+    public JSONObject executeAndLogHTTPResponse(HttpUriRequest request) {
+        HttpClientFactory clientFactory = new HttpClientFactory() {
+            @Override
+            public HttpClient getHttpClient() {
+                return new DefaultHttpClient();
+            }
+        };
+        HttpClient httpClient = clientFactory.getHttpClient();
+        HttpContext localContext = new BasicHttpContext();
+        String responseText = "";
+
+        try {
+            HttpResponse response = httpClient.execute(request, localContext);
+            BufferedReader reader;
+            reader = new BufferedReader(new InputStreamReader(response
+                    .getEntity().getContent(), "UTF-8"));
+
+            String line = "";
+            while ((line = reader.readLine()) != null) {
+                responseText = responseText + " " + line;
+            }
+            reader.close();
+            
+            Log.i(TDDatabase.TAG, "Response text: "
+                    + responseText);
+            
+            JSONObject responseObj = new JSONObject(responseText);
+            return responseObj;
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
     
     public void testPuller() throws Throwable {
