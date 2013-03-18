@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.codehaus.jackson.map.ObjectMapper;
 
 import com.couchbase.touchdb.support.HttpClientFactory;
 
@@ -36,7 +37,7 @@ import com.couchbase.touchdb.support.HttpClientFactory;
  */
 public class TDServer {
 
-    private static final TDObjectMapper mapper = new TDObjectMapper();
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     public static final String LEGAL_CHARACTERS = "[^a-z]{1,}[^a-z0-9_$()/+-]*$";
     public static final String DATABASE_SUFFIX = ".touchdb";
@@ -46,7 +47,7 @@ public class TDServer {
 
     private HttpClientFactory defaultHttpClientFactory;
 
-    public static TDObjectMapper getObjectMapper() {
+    public static ObjectMapper getObjectMapper() {
         return mapper;
     }
 
