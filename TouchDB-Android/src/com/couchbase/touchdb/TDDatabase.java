@@ -1509,7 +1509,7 @@ public class TDDatabase extends Observable {
                         Log.d(TAG, "Marking attachments as follows.");
                         attachment.put("follows", true);
                         /* TODO test this */
-                        result.put("_multipartAttachmentFollows"+System.currentTimeMillis(), attachments.pathForKey(key));
+                        result.put("_multipartAttachmentFollows_"+System.currentTimeMillis()+"_"+cursor.getString(0), attachments.pathForKey(key));
                     } else {
                         Log.d(TAG, "In-lining attachments.");
                         String dataBase64 = null;

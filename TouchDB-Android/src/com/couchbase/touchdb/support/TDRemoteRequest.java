@@ -1,5 +1,6 @@
 package com.couchbase.touchdb.support;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -31,12 +32,16 @@ import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
+import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.JsonNode;
+import org.json.JSONObject;
 
 import android.os.Handler;
 import android.util.Log;
 
 import com.couchbase.touchdb.TDDatabase;
 import com.couchbase.touchdb.TDServer;
+import com.couchbase.touchdb.replicator.MultiPartWriter;
 
 public class TDRemoteRequest implements Runnable {
 
@@ -137,11 +142,15 @@ public class TDRemoteRequest implements Runnable {
         //set body if appropriate
         if(body != null && request instanceof HttpEntityEnclosingRequestBase) {
             byte[] bodyBytes = null;
+            MultiPartWriter bodyMultipart = null;
             try {
+                /* this contains only the body */
                 bodyBytes = TDServer.getObjectMapper().writeValueAsBytes(body);
+                bodyMultipart = TDServer.getObjectMapper().writeValueAsMultipart(body);
             }catch (Exception e) {
                 Log.e(TDDatabase.TAG, "Error serializing body of request", e);
             }
+            /* TODO either make this into a multipart entity, or send the attachments as standalone */
             ByteArrayEntity entity = new ByteArrayEntity(bodyBytes);
             entity.setContentType("application/json");
             ((HttpEntityEnclosingRequestBase)request).setEntity(entity);
