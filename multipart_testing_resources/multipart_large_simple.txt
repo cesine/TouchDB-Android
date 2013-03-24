@@ -1,0 +1,89 @@
+--abc123
+content-type: application/json
+
+{
+   "_id": "testcurlfilemulitpartlargesimpleattachments",
+   "_rev": "2-b8d60bca-7dcd-4f90-a4d4-4809d00d073b",
+   "conclusionAttributes": {
+       "footer_inspection_remarks": "ALPHANUMERIC",
+       "footer_critical_aql": "0.000",
+       "footer_major_aql": "1.500",
+       "footer_minor_aql": "4.000",
+       "packaging_total_defects_comments": "",
+       "assembly_total_defects_comments": "",
+       "function_total_defects_comments": "",
+       "finishing_total_defects_comments": "",
+       "inspection_total_defects_comments": "",
+       "packaging_total_critical_defect_count": 0,
+       "assembly_total_critical_defect_count": 0,
+       "function_total_critical_defect_count": 0,
+       "finishing_total_critical_defect_count": 0,
+       "inspection_total_critical_defect_count": 0,
+       "packaging_total_major_defect_count": 0,
+       "assembly_total_major_defect_count": 0,
+       "function_total_major_defect_count": 0,
+       "finishing_total_major_defect_count": 0,
+       "inspection_total_major_defect_count": 0,
+       "packaging_total_minor_defect_count": 0,
+       "assembly_total_minor_defect_count": 0,
+       "function_total_minor_defect_count": 0,
+       "finishing_total_minor_defect_count": 0,
+       "inspection_total_minor_defect_count": 0
+   },
+   "inspector": {
+   },
+   "inspectionAttributes": {
+       "sku_name": "135959",
+       "sku_number": "ZZLD50619   ",
+       "inspection_date": "2012-12-19",
+       "container_number": "ALPHANUMERIC",
+       "reference_sample_provided": "Y/N",
+       "inspection_number": "1,2,3",
+       "purchase_order_number": "4283",
+       "container_seal_number": "ALPHANUMERIC",
+       "client_approved_reference_sample": "Y/N",
+       "sampling_size_inspection": "20",
+       "supplier_name": "Longda",
+       "total_lot_size_pieces": "106",
+       "effective_lot_size_pieces": "NUMERIC",
+       "inspector_name": "",
+       "assignment_number": "1061",
+       "total_lot_size_containers": "106",
+       "effective_lot_size_containers": "NUMERIC",
+       "sampling_by_attribute_plan": "MILITARY STANDARD 105E (ANSI/ASQC Z1.4 ISO 2859)",
+       "inspection_level": "Level 2",
+       "inspection_aql": "1.500",
+       "inspection_type": "Normal",
+       "inspection_other_instruction": ""
+   },
+   "collection": "sku_inspections",
+   "sku": {
+   },
+   "assignment": {
+   },
+   "buyer": {
+   },
+   "purchaseOrder": {
+   },
+   "conclusion": "",
+   "photoReportStatus": "Started",
+   "workOrder": {
+   },
+   "supplier": {
+   },
+   "inspectionSubSections": {
+   },
+   "metadata": {
+       "_version": "1.53.1.3",
+       "_json_generated_from_xlsx_on": "2012-10-14T02:28:25.394Z",
+       "_generated_by_a_tablet_on": "Wed Dec 19 2012 20:41:04 GMT+0800 (CST)",
+       "_browser": "Mozilla/5.0 (Linux; U; Android 4.0.4; zh-cn; GT-P7500 Build/IMM76D) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Safari/534.30 OfflineAndroidApp"
+   }
+  ,"body":"here is a body, of a document with attachments created by curl with no charset.","_attachments":{"bar.txt":{"length":20,"digest":"sha1-5Nv50i9ITYEzxsvCtey7LIqTSWw=","revpos":1,"content_type":"text/html","follows":true},"foo.txt":{"length":21,"digest":"sha1-FvDkU0BrcbY9v5fVGx+/xVkNNjg=","revpos":1,"content_type":"text/html","follows":true}}}
+--abc123
+
+this is 20 chars lon
+--abc123
+
+this is 21 chars long
+--abc123--

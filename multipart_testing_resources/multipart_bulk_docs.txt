@@ -1,0 +1,36 @@
+--abc123
+content-type: application/json
+
+{
+   "docs": [
+       {
+           "_id": "testbulkdocsreplicationwithmultipartattachmentupload",
+           "_rev": "1-2648646d-5380-4c48-89c8-ac9ae7058fbd",
+           "body": "here is a body, of a document with attachments created in touchdb.",
+           "_attachments": {
+               "bar.txt": {
+                   "length": 20,
+                   "digest": "sha1-5Nv50i9ITYEzxsvCtey7LIqTSWw=",
+                   "revpos": 1,
+                   "content_type": "text/html",
+                   "follows": true
+               },
+               "foo.txt": {
+                   "length": 21,
+                   "digest": "sha1-FvDkU0BrcbY9v5fVGx+/xVkNNjg=",
+                   "revpos": 1,
+                   "content_type": "text/html",
+                   "follows": true
+               }
+           }
+       }
+   ],
+   "new_edits": false
+}
+--abc123
+
+this is 20 chars lon
+--abc123
+
+this is 21 chars long
+--abc123--

@@ -1,0 +1,19 @@
+--abc123
+Content-Disposition: form-data; name="json"
+Content-Type: application/json; charset=UTF-8
+Content-Encoding: 8bit
+
+{"body":"here is a body, of a document with attachments created in touchdb.","_attachments":{"bar.txt":{"length":20,"digest":"sha1-5Nv50i9ITYEzxsvCtey7LIqTSWw=","revpos":1,"content_type":"text/html","follows":true},"foo.txt":{"length":21,"digest":"sha1-FvDkU0BrcbY9v5fVGx+/xVkNNjg=","revpos":1,"content_type":"text/html","follows":true}}}
+--abc123
+Content-Disposition: form-data; name="bar.txt"; filename="bar.txt"
+Content-Type: text/plain; charset=UTF-8
+Content-Encoding: binary
+
+this is 20 chars lon
+--abc123
+Content-Disposition: form-data; name="foo.txt"; filename="foo.txt"
+Content-Type: text/plain; charset=UTF-8
+Content-Encoding: binary
+
+this is 21 chars long
+--abc123--

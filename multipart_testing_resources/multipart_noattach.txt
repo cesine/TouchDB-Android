@@ -1,0 +1,5 @@
+--abc123
+{
+   "body":"here is a body, of a document with no attachments created by curl."
+}
+--abc123-- 
