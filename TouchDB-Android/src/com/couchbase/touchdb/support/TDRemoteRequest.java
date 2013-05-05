@@ -143,8 +143,13 @@ public class TDRemoteRequest implements Runnable {
                 	try {
 	                    InputStream stream = temp.getContent();
 	                    fullBody = TDServer.getObjectMapper().readValue(stream, Object.class);
-                	} finally {
-                		try { temp.consumeContent(); } catch (IOException e) {}
+                	}catch(Exception e){
+                    Log.e(TDDatabase.TAG, "Fatal exception in reading the database. Probably ran out of memory : " );
+                    e.printStackTrace();
+                	}  finally {
+                		try { temp.consumeContent(); } catch (IOException e) {
+                		  e.printStackTrace();
+                		}
                 	}
                 }
             }

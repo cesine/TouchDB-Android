@@ -188,7 +188,7 @@ public class TDChangeTracker implements Runnable {
             try {
                 String maskedRemoteWithoutCredentials = getChangesFeedURL().toString();
                 maskedRemoteWithoutCredentials = maskedRemoteWithoutCredentials.replaceAll("://.*:.*@","://---:---@");
-                Log.v(TDDatabase.TAG, "Making request to " + maskedRemoteWithoutCredentials);
+//                Log.v(TDDatabase.TAG, "Making request to " + maskedRemoteWithoutCredentials);
                 HttpResponse response = httpClient.execute(request);
                 StatusLine status = response.getStatusLine();
                 if(status.getStatusCode() >= 300) {
@@ -227,7 +227,7 @@ public class TDChangeTracker implements Runnable {
                 if(running) {
                     //we get an exception when we're shutting down and have to
                     //close the socket underneath our read, ignore that
-                    Log.e(TDDatabase.TAG, "IOException in change tracker", e);
+//                    Log.d(TDDatabase.TAG, "IOException in change tracker", e);
                 }
             }
         }
