@@ -4,6 +4,9 @@ import java.util.Properties;
 
 import Acme.Serve.Serve;
 
+import android.util.Log;
+
+import com.couchbase.touchdb.TDDatabase;
 import com.couchbase.touchdb.TDServer;
 
 @SuppressWarnings("serial")
@@ -14,7 +17,7 @@ public class TDHTTPServer extends Serve {
     private Properties props;
     private TDServer server;
     private TDListener listener;
-
+    private TDHTTPServlet servlet;
     public TDHTTPServer() {
         props = new Properties();
     }
@@ -37,14 +40,22 @@ public class TDHTTPServer extends Serve {
         this.arguments = props;
 
         //pass in the tdserver to the servlet
-        TDHTTPServlet servlet = new TDHTTPServlet();
+        servlet = new TDHTTPServlet();
         servlet.setServer(server);
         servlet.setListener(listener);
 
         this.addServlet("/", servlet);
-        int result = super.serve();
         
+        int result = super.serve();
         return result;
     }
+
+    @Override
+    public void notifyStop() {
+      Log.d(TDDatabase.TAG, "Notifying stop on the TDHTTPServer");
+      super.notifyStop();
+      super.destroyAllServlets();
+    }
+    
 
 }
