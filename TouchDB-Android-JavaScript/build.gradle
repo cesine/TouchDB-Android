@@ -1,0 +1,71 @@
+buildscript {
+
+    repositories {
+
+        maven {
+            credentials {
+                username mavenUser
+                password mavenPassword
+            }
+            url "https://maven.example.org/nexus/content/groups/public"
+        }
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.9.2'
+    }
+}
+
+
+apply plugin: 'android-library'
+
+targetCompatibility = 1.6
+sourceCompatibility = 1.6
+
+
+repositories {
+
+    maven {
+        credentials {
+            username mavenUser
+            password mavenPassword
+        }
+        url "https://maven.example.org/nexus/content/groups/public"
+    }
+}
+
+
+dependencies {
+    compile fileTree(dir: 'libs', include: '*.jar')
+
+    compile project(':..:TouchDB-Android')
+    
+}
+
+
+android {
+    buildToolsVersion "19.1.0"
+    compileSdkVersion 19
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+
+            java.srcDirs = ['src']
+
+            resources.srcDirs = ['src']
+            aidl.srcDirs = ['src']
+
+            renderscript.srcDirs = ['src']
+
+            res.srcDirs = ['res']
+            assets.srcDirs = ['assets']
+        }
+
+        instrumentTest.setRoot('tests')
+    }
+}
+
+task jar(type: Jar) {
+    from android.sourceSets.main.java
+}
