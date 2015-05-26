@@ -121,6 +121,9 @@ public class TDBody {
 
     public Object getPropertyForKey(String key) {
         Map<String,Object> theProperties = getProperties();
+        if (null == theProperties) {
+           return null;
+        }
         return theProperties.get(key);
     }
 
