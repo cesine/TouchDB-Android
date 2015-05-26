@@ -74,7 +74,7 @@ public class TDHTTPServlet extends HttpServlet {
 
         final ServletOutputStream os = response.getOutputStream();
         response.setBufferSize(128);
-        Log.v(TDDatabase.TAG, String.format("Buffer size is %d", response.getBufferSize()));
+//        Log.v(TDDatabase.TAG, String.format("Buffer size is %d", response.getBufferSize()));
 
         final CountDownLatch doneSignal = new CountDownLatch(1);
 
