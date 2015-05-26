@@ -15,7 +15,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-import android.os.Handler;
 import android.util.Log;
 
 import com.couchbase.touchdb.TDDatabase;
