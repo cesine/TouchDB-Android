@@ -55,6 +55,10 @@ public class TDChangeTracker implements Runnable {
     private String filterName;
     private Map<String, Object> filterParams;
 
+    protected int currentBackoff = 10;
+    protected int defaultBackoff = 10;
+    protected int maxBackoff = 300;// five minutes
+    
     private Throwable error;
 
     public enum TDChangeTrackerMode {
@@ -144,7 +148,8 @@ public class TDChangeTracker implements Runnable {
     public void run() {
         running = true;
         HttpClient httpClient = client.getHttpClient();
-        while (running) {
+        while (currentBackoff < maxBackoff && running) {
+
 
             URL url = getChangesFeedURL();
             request = new HttpGet(url.toString());
@@ -197,6 +202,7 @@ public class TDChangeTracker implements Runnable {
                 }
                 HttpEntity entity = response.getEntity();
                 if(entity != null) {
+                  currentBackoff = defaultBackoff;
                 	try {
 	                    InputStream input = entity.getContent();
 	                    if(mode == TDChangeTrackerMode.LongPoll) {
@@ -240,7 +246,22 @@ public class TDChangeTracker implements Runnable {
                     Log.e(TDDatabase.TAG, "IOException in change tracker", e);
                 }
             }
+            if(running) {
+              try {
+                Log.v(TDDatabase.TAG, "Change tracker sleeping "+currentBackoff + " seconds.");
+                Thread.sleep(currentBackoff * 1000);
+              } catch (InterruptedException e) {
+                Log.v(TDDatabase.TAG, "Change tracker was interupted during sleep");
+                e.printStackTrace();
+              }
+              currentBackoff = currentBackoff * 2;
+            }
         }
+        if(currentBackoff > maxBackoff){
+          Log.v(TDDatabase.TAG, "Change tracker hasnt connected in too long, turning it off until touchdb turns it back on again: "+currentBackoff + " seconds .");
+          stop();
+        }
+        
         Log.v(TDDatabase.TAG, "Change tracker run loop exiting");
     }
 
@@ -301,6 +322,7 @@ public class TDChangeTracker implements Runnable {
     public void stop() {
         Log.d(TDDatabase.TAG, "changed tracker asked to stop");
         running = false;
+        currentBackoff = defaultBackoff;
         thread.interrupt();
         if(request != null) {
             request.abort();
