@@ -32,6 +32,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
 
+import android.util.Base64;
 import android.util.Log;
 
 import com.couchbase.touchdb.TDDatabase;
@@ -148,11 +149,14 @@ public class TDChangeTracker implements Runnable {
     public void run() {
         running = true;
         HttpClient httpClient = client.getHttpClient();
+
         while (currentBackoff < maxBackoff && running) {
 
 
             URL url = getChangesFeedURL();
             request = new HttpGet(url.toString());
+            String basicAuth = "Basic " + new String(Base64.encodeToString(url.getUserInfo().getBytes(), Base64.NO_WRAP));
+            request.setHeader("Authorization", basicAuth);
 
             // if the URL contains user info AND if this a DefaultHttpClient
             // then preemptively set the auth credentials
